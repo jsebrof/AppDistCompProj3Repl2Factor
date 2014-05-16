@@ -1,17 +1,26 @@
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject implements R2FServerInterface {
 	private static final long serialVersionUID = -3503888069129478963L;
 	private HashMap<String, String> store;
 	private long timestart;
+	private String[] otherServers;
+	private Queue<String[]> updates;
 
 	// Constructor
-	public R2FServerImplementation(HashMap<String, String> the_store, long the_time) throws RemoteException
+	public R2FServerImplementation(HashMap<String, String> the_store, long the_time, String[] the_other_servers) throws RemoteException
 	{
 		super();
 		store = the_store;
 		timestart = the_time;
+		otherServers = the_other_servers;
+		updates = new LinkedList<String[]>();
 	}
 
 	public synchronized String Put(String key, String value) throws RemoteException // synchronized means thread safety
@@ -26,7 +35,35 @@ public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject
 			return_string = "Placed Key \"" + key + "\" and Value \"" + value + "\" into the Key/Value store";
 		}
 		store.put(key, value); // place key/value into the Map
-		System.out.println(return_string + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+
+		// Create references to the remote objects through the rmiregistries
+		try
+		{
+			R2FServerInterface[] serverInterfaces = {
+					(R2FServerInterface)Naming.lookup("rmi://" + otherServers[0] + "/ThreadsService"),
+					(R2FServerInterface)Naming.lookup("rmi://" + otherServers[1] + "/ThreadsService"),
+					(R2FServerInterface)Naming.lookup("rmi://" + otherServers[2] + "/ThreadsService"),
+					(R2FServerInterface)Naming.lookup("rmi://" + otherServers[3] + "/ThreadsService")};
+
+			// send update to each other replicated server and print acknowledgment
+			for(int i = 0; i < serverInterfaces.length; i++)
+			{
+				System.out.println("PUT Update " + serverInterfaces[i].UpdatePut(key, value) + " by server " + otherServers[i] + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+			}
+
+			// send commit to each other replicated server and print acknowledgment
+			for(int i = 0; i < serverInterfaces.length; i++)
+			{
+				System.out.println("PUT Update " + serverInterfaces[i].CommitUpdate() + " by server " + otherServers[i] + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+			}
+		}
+		catch (MalformedURLException | NotBoundException e)
+		{
+			e.printStackTrace();
+			return "Replicated server error, see accessed server error printout";
+		}
+
+		System.out.println(return_string + "across all servers at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 		return return_string;
 	}
 
@@ -51,8 +88,35 @@ public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject
 		if (store.containsKey(key))
 		{
 			return_string = "Key \"" + key + "\" Value \"" + store.get(key) + "\" deleted";
-			System.out.println(return_string + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+			System.out.println(return_string + "across all servers at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 			store.remove(key); // delete key/value from the Map
+
+			// Create references to the remote objects through the rmiregistries
+			try
+			{
+				R2FServerInterface[] serverInterfaces = {
+						(R2FServerInterface)Naming.lookup("rmi://" + otherServers[0] + "/ThreadsService"),
+						(R2FServerInterface)Naming.lookup("rmi://" + otherServers[1] + "/ThreadsService"),
+						(R2FServerInterface)Naming.lookup("rmi://" + otherServers[2] + "/ThreadsService"),
+						(R2FServerInterface)Naming.lookup("rmi://" + otherServers[3] + "/ThreadsService")};
+
+				// send update to each other replicated server and print acknowledgment
+				for(int i = 0; i < serverInterfaces.length; i++)
+				{
+					System.out.println("DELETE Update " + serverInterfaces[i].UpdateDelete(key) + " by server " + otherServers[i] + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+				}
+
+				// send commit to each other replicated server and print acknowledgment
+				for(int i = 0; i < serverInterfaces.length; i++)
+				{
+					System.out.println("DELETE Update " + serverInterfaces[i].CommitUpdate() + " by server " + otherServers[i] + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+				}
+			}
+			catch (MalformedURLException | NotBoundException e)
+			{
+				e.printStackTrace();
+				return "Replicated server error, see accessed server error printout";
+			}
 		}
 		else
 		{
@@ -61,5 +125,69 @@ public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject
 		}
 		return return_string;
 	}
+
+	public synchronized String UpdatePut(String key, String value) throws RemoteException
+	{
+		String[] PUTupdate = {"put",key,value};
+		updates.add(PUTupdate);
+		return "acknowledged";
+	}
+
+	public synchronized String UpdateDelete(String key) throws RemoteException
+	{
+		String[] DELETEupdate = {"delete",key};
+		updates.add(DELETEupdate);
+		return "acknowledged";
+	}
+
+	public synchronized String CommitUpdate() throws RemoteException
+	{
+		String[] update = updates.remove();
+		if (update[0] == "put")
+		{
+			store.put(update[1], update[2]); // place key/value into the Map
+		}
+		else if (update[0] == "delete")
+		{
+			store.remove(update[1]); // delete key/value from the Map
+		}
+		return "committed";
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

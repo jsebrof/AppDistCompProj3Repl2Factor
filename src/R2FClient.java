@@ -38,21 +38,21 @@ public class R2FClient
 			}
 
 			// Create the reference to the remote object through the rmiregistry			
-			R2FServerInterface c = (R2FServerInterface)Naming.lookup("rmi://" + serverIP + ":" + port + "/ThreadsService");
+			R2FServerInterface server = (R2FServerInterface)Naming.lookup("rmi://" + serverIP + ":" + port + "/ThreadsService");
 			String returnedString;
 			
 			switch (operation.toLowerCase())
 			{
 			case "put":
-				returnedString = c.Put(key, value);
+				returnedString = server.Put(key, value);
 				System.out.println("Received from server: \"" + returnedString + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 				break;
 			case "get":
-				returnedString = c.Get(key);
+				returnedString = server.Get(key);
 				System.out.println("Received from server: \"" + returnedString + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 				break;
 			case "delete":
-				returnedString = c.Delete(key);
+				returnedString = server.Delete(key);
 				System.out.println("Received from server: \"" + returnedString + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 				break;
 			default:
