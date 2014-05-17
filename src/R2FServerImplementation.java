@@ -63,7 +63,7 @@ public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject
 			return "Replicated server error, see accessed server error printout";
 		}
 
-		System.out.println(return_string + "across all servers at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+		System.out.println(return_string + " across all servers at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 		return return_string;
 	}
 
@@ -88,7 +88,6 @@ public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject
 		if (store.containsKey(key))
 		{
 			return_string = "Key \"" + key + "\" Value \"" + store.get(key) + "\" deleted";
-			System.out.println(return_string + "across all servers at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 			store.remove(key); // delete key/value from the Map
 
 			// Create references to the remote objects through the rmiregistries
@@ -123,6 +122,7 @@ public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject
 			return_string = "No value found in store for Key \"" + key + "\"";
 			System.out.println(return_string + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 		}
+		System.out.println(return_string + " across all servers at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 		return return_string;
 	}
 
