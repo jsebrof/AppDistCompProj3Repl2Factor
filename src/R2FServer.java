@@ -12,8 +12,8 @@ public class R2FServer
 		int port;
 		if (args.length >= 4) // If there are the minimum # of command line arguments
 		{
-			otherServers[0] = args[0]; // These serverIP arguments each need to follow the form
-			otherServers[1] = args[1]; // n01:1099
+			otherServers[0] = args[0];
+			otherServers[1] = args[1];
 			otherServers[2] = args[2];
 			otherServers[3] = args[3];
 		}
