@@ -129,14 +129,14 @@ public class R2FServerImplementation extends java.rmi.server.UnicastRemoteObject
 	public synchronized String UpdatePut(String key, String value) throws RemoteException
 	{
 		String[] PUTupdate = {"put",key,value};
-		updates.add(PUTupdate);
+		updates.add(PUTupdate); // place the update into this queue for storage until told to commit the update
 		return "acknowledged";
 	}
 
 	public synchronized String UpdateDelete(String key) throws RemoteException
 	{
 		String[] DELETEupdate = {"delete",key};
-		updates.add(DELETEupdate);
+		updates.add(DELETEupdate); // place the update into this queue for storage until told to commit the update
 		return "acknowledged";
 	}
 
